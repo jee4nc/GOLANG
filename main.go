@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -43,7 +44,20 @@ func createTasks(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newTask)
 }
-
+func getTask(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	taskID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		fmt.Fprintf(w, "INVALID ID")
+		return
+	}
+	for _, task := range tasks {
+		if task.ID == taskID {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(task)
+		}
+	}
+}
 func indexRoute(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "WELCOME TO MY SERVIDOR")
 }
@@ -53,6 +67,7 @@ func main() {
 	router.HandleFunc("/", indexRoute)
 	router.HandleFunc("/tasks", getTasks).Methods("GET")
 	router.HandleFunc("/tasks", createTasks).Methods("POST")
+	router.HandleFunc("/tasks/{id}", getTask).Methods("GET")
 	http.ListenAndServe(":3000", router)
 	log.Fatal(http.ListenAndServe(":3000", router))
 }
